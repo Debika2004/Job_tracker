@@ -1,2 +1,65 @@
-AI-Powered Job Application Agent
-Developed an intelligent agent that automates the job search process by extracting opportunities from emails (e.g., LinkedIn, Naukri), filtering them based on user profile and skills, and assisting with application workflows. The system uses LLM-based reasoning to identify relevant roles, track application status, and generate daily summaries highlighting applied jobs, pending actions, and insights. Built using FastAPI, MongoDB, and browser automation tools to reduce manual effort and improve application efficiency.
+# Job Tracker MVP Backend
+
+This repository contains a FastAPI MVP backend for an email-driven job tracker that:
+- Authorizes Gmail access using OAuth (Web Application flow)
+- Pulls matching job emails from Gmail
+- Extracts structured job fields with OpenAI
+- Stores extracted results in MongoDB Atlas
+- Runs on a 60-minute APScheduler interval (plus manual trigger endpoint)
+
+## Project structure
+- `backend/app/main.py` – FastAPI app + API routes + scheduler startup
+- `backend/app/services/gmail_service.py` – Gmail OAuth + message fetch
+- `backend/app/services/openai_service.py` – OpenAI structured extraction
+- `backend/app/services/job_pipeline.py` – fetch → extract → persist workflow
+
+## Windows local setup
+### 1) Open terminal and go to backend
+```powershell
+cd backend
+```
+
+### 2) Create and activate virtual environment
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+
+### 3) Install dependencies
+```powershell
+pip install -r requirements.txt
+```
+
+### 4) Configure environment variables
+```powershell
+copy .env.example .env
+```
+Then edit `.env` and set:
+- `MONGODB_URI`
+- `MONGODB_DB`
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `GOOGLE_REDIRECT_URI` (must be `http://localhost:8000/api/gmail/oauth/callback`)
+- `GMAIL_SEARCH_QUERY`
+- `OPENAI_API_KEY`
+- `OPENAI_MODEL`
+
+### 5) Run API with uvicorn
+```powershell
+uvicorn app.main:app --reload --port 8000
+```
+
+## Endpoints
+- `GET /health`
+- `GET /api/gmail/oauth/start` → returns `{ "auth_url": "..." }`
+- `GET /api/gmail/oauth/callback?code=...` → stores token in `backend/.gmail_token.json`
+- `POST /api/jobs/run-once`
+- `GET /api/jobs/latest`
+
+## Gmail OAuth setup (Google Cloud)
+Create OAuth client as **Web application** and add redirect URI:
+- `http://localhost:8000/api/gmail/oauth/callback`
+
+## Notes
+- OAuth token is persisted locally in `backend/.gmail_token.json` for MVP simplicity.
+- Scheduler runs automatically at app startup and executes every 60 minutes.

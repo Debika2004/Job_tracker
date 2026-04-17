@@ -1,0 +1,9 @@
+fastapi==0.115.12
+uvicorn==0.34.0
+pymongo==4.10.1
+APScheduler==3.10.4
+pydantic-settings==2.8.1
+google-auth-oauthlib==1.2.1
+google-api-python-client==2.161.0
+openai==1.65.5
+python-dateutil==2.9.0.post0

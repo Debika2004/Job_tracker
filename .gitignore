@@ -5,3 +5,5 @@ __pycache__/
 *.pyd
 *.db
 *.env
+backend/.gmail_token.json
+.pytest_cache/

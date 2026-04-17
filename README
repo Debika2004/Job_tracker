@@ -1,66 +1,131 @@
-# Job Tracker MVP Backend
+# Job Tracker – Email → LLM → MongoDB
 
-This repository contains a FastAPI MVP backend for an email-driven job tracker that:
-- Authorizes Gmail access using OAuth (Web Application flow)
-- Pulls matching job emails from Gmail
-- Extracts structured job fields with OpenAI
-- Stores extracted results in MongoDB Atlas
-- Runs on a 60-minute APScheduler interval (plus manual trigger endpoint)
+A full-stack MVP job tracker that reads your Gmail, extracts job details with OpenAI, and shows them in a React dashboard.
 
-## Project structure
-- `backend/app/main.py` – FastAPI app + API routes + scheduler startup
-- `backend/app/services/gmail_service.py` – Gmail OAuth + message fetch
-- `backend/app/services/openai_service.py` – OpenAI structured extraction
-- `backend/app/services/job_pipeline.py` – fetch → extract → persist workflow
+## Stack
+- **Backend** – FastAPI + APScheduler + pymongo + google-auth + OpenAI (`backend/`)
+- **Frontend** – React + Vite (`frontend/`)
 
-## Windows local setup
-### 1) Open terminal and go to backend
+---
+
+## Prerequisites (Windows)
+- Python 3.10 or newer
+- Node.js 18 or newer
+- MongoDB Atlas cluster (free tier is fine)
+- Google Cloud project with Gmail API enabled and an OAuth **Web application** client
+- OpenAI API key
+
+---
+
+## 1 · Set up Google OAuth
+1. Open [Google Cloud Console](https://console.cloud.google.com/) → **APIs & Services → Library** → enable **Gmail API**
+2. **Credentials → Create Credentials → OAuth client ID**
+   - Application type: **Web application**
+   - Authorized redirect URIs: `http://localhost:8000/api/gmail/oauth/callback`
+3. Copy **Client ID** and **Client Secret**
+
+---
+
+## 2 · Configure the backend
+
 ```powershell
 cd backend
-```
-
-### 2) Create and activate virtual environment
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-```
-
-### 3) Install dependencies
-```powershell
-pip install -r requirements.txt
-```
-
-### 4) Configure environment variables
-```powershell
 copy .env.example .env
 ```
-Then edit `.env` and set:
-- `MONGODB_URI`
-- `MONGODB_DB`
-- `GOOGLE_CLIENT_ID`
-- `GOOGLE_CLIENT_SECRET`
-- `GOOGLE_PROJECT_ID`
-- `GOOGLE_REDIRECT_URI` (must be `http://localhost:8000/api/gmail/oauth/callback`)
-- `GMAIL_SEARCH_QUERY`
-- `OPENAI_API_KEY`
-- `OPENAI_MODEL`
 
-### 5) Run API with uvicorn
+Edit `backend/.env` and fill in every value:
+
+| Variable | Description |
+|---|---|
+| `MONGODB_URI` | Atlas connection string |
+| `MONGODB_DB` | Database name (default `job_tracker`) |
+| `GOOGLE_CLIENT_ID` | OAuth Client ID |
+| `GOOGLE_CLIENT_SECRET` | OAuth Client Secret |
+| `GOOGLE_PROJECT_ID` | Google Cloud project ID |
+| `OPENAI_API_KEY` | OpenAI key |
+| `OPENAI_MODEL` | Model name (default `gpt-4o-mini`) |
+| `GMAIL_SEARCH_QUERY` | Gmail search filter for job emails |
+
+---
+
+## 3 · Run the backend
+
 ```powershell
+cd backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
 
-## Endpoints
-- `GET /health`
-- `GET /api/gmail/oauth/start` → returns `{ "auth_url": "..." }`
-- `GET /api/gmail/oauth/callback?code=...` → stores token in `backend/.gmail_token.json`
-- `POST /api/jobs/run-once`
-- `GET /api/jobs/latest`
+API is now at **http://localhost:8000**
 
-## Gmail OAuth setup (Google Cloud)
-Create OAuth client as **Web application** and add redirect URI:
-- `http://localhost:8000/api/gmail/oauth/callback`
+---
 
-## Notes
-- OAuth token is persisted locally in `backend/.gmail_token.json` for MVP simplicity.
-- Scheduler runs automatically at app startup and executes every 60 minutes.
+## 4 · Run the frontend
+
+Open a **second** terminal:
+
+```powershell
+cd frontend
+copy .env.example .env
+npm install
+npm run dev
+```
+
+Frontend is now at **http://localhost:5173**
+
+---
+
+## 5 · Connect Gmail
+
+1. Open **http://localhost:5173** in your browser
+2. Click **"Get Authorization URL"** in the *Connect Gmail* card
+3. Follow the link that appears → authorize the app in your Google account
+4. Token is saved to `backend/.gmail_token.json`
+
+---
+
+## 6 · Sync jobs
+
+- Click **"Run Once"** in the dashboard to immediately fetch and extract jobs
+- The scheduler also runs automatically every 60 minutes in the background
+
+---
+
+## API endpoints (backend)
+
+| Method | Path | Description |
+|---|---|---|
+| GET | `/health` | Health check |
+| GET | `/api/gmail/oauth/start` | Returns Google OAuth URL |
+| GET | `/api/gmail/oauth/callback?code=…` | Exchanges auth code, saves token |
+| POST | `/api/jobs/run-once` | Trigger immediate pipeline run |
+| GET | `/api/jobs/latest` | Return latest extracted jobs |
+
+---
+
+## Project layout
+
+```
+Job_tracker/
+├── backend/
+│   ├── app/
+│   │   ├── main.py              # FastAPI app, scheduler, routes
+│   │   ├── config.py            # pydantic-settings config
+│   │   ├── db.py                # pymongo client
+│   │   └── services/
+│   │       ├── gmail_service.py  # OAuth flow + message fetch
+│   │       ├── openai_service.py # Structured extraction
+│   │       └── job_pipeline.py   # Orchestration + upsert
+│   ├── requirements.txt
+│   └── .env.example
+├── frontend/
+│   ├── src/
+│   │   ├── App.jsx              # Main React UI
+│   │   ├── App.css              # Component styles
+│   │   └── main.jsx             # Entry point
+│   ├── package.json
+│   └── .env.example
+└── README
+```

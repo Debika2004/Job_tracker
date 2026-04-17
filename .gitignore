@@ -7,3 +7,5 @@ __pycache__/
 *.env
 backend/.gmail_token.json
 .pytest_cache/
+frontend/node_modules/
+frontend/dist/

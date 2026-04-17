@@ -1,0 +1,2 @@
+AI-Powered Job Application Agent
+Developed an intelligent agent that automates the job search process by extracting opportunities from emails (e.g., LinkedIn, Naukri), filtering them based on user profile and skills, and assisting with application workflows. The system uses LLM-based reasoning to identify relevant roles, track application status, and generate daily summaries highlighting applied jobs, pending actions, and insights. Built using FastAPI, MongoDB, and browser automation tools to reduce manual effort and improve application efficiency.

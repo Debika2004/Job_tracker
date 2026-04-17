@@ -1,4 +1,6 @@
 from contextlib import asynccontextmanager
+import logging
+from typing import Any
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI, HTTPException, Query
@@ -9,13 +11,14 @@ from app.services.gmail_service import create_authorization_url, exchange_code_f
 from app.services.job_pipeline import get_latest_jobs, run_pipeline_once
 
 scheduler = BackgroundScheduler(timezone="UTC")
+logger = logging.getLogger(__name__)
 
 
 def _scheduled_job() -> None:
     try:
         run_pipeline_once()
     except Exception:
-        pass
+        logger.exception("Scheduled Gmail job pipeline failed.")
 
 
 @asynccontextmanager
@@ -63,7 +66,7 @@ def gmail_oauth_callback(code: str = Query(..., min_length=1)) -> dict[str, str]
 
 
 @app.post("/api/jobs/run-once")
-def run_once() -> dict:
+def run_once() -> dict[str, Any]:
     try:
         return run_pipeline_once()
     except Exception as exc:
@@ -71,7 +74,7 @@ def run_once() -> dict:
 
 
 @app.get("/api/jobs/latest")
-def latest_jobs(limit: int = Query(20, ge=1, le=100)) -> dict:
+def latest_jobs(limit: int = Query(20, ge=1, le=100)) -> dict[str, list[dict[str, Any]]]:
     try:
         return {"jobs": get_latest_jobs(limit=limit)}
     except Exception as exc:

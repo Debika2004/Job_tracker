@@ -24,9 +24,9 @@ def _scopes() -> list[str]:
 def _oauth_client_config() -> dict[str, Any]:
     settings = get_settings()
     return {
-        "web": {
-            "client_id": settings.google_client_id,
-            "project_id": "job-tracker-mvp",
+            "web": {
+                "client_id": settings.google_client_id,
+                "project_id": settings.google_project_id,
             "auth_uri": "https://accounts.google.com/o/oauth2/auth",
             "token_uri": "https://oauth2.googleapis.com/token",
             "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
@@ -81,7 +81,7 @@ def _decode_body(payload: dict[str, Any]) -> str:
         return decoded.decode("utf-8", errors="ignore")
 
     text_chunks: list[str] = []
-    for part in payload.get("parts", []) or []:
+    for part in payload.get("parts", []):
         mime_type = part.get("mimeType", "")
         if mime_type.startswith("text/"):
             part_data = part.get("body", {}).get("data")

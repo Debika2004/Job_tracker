@@ -39,6 +39,7 @@ Then edit `.env` and set:
 - `MONGODB_DB`
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
+- `GOOGLE_PROJECT_ID`
 - `GOOGLE_REDIRECT_URI` (must be `http://localhost:8000/api/gmail/oauth/callback`)
 - `GMAIL_SEARCH_QUERY`
 - `OPENAI_API_KEY`

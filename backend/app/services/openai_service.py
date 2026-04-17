@@ -1,4 +1,6 @@
 import json
+import logging
+from functools import lru_cache
 from typing import Any
 
 from openai import OpenAI
@@ -12,11 +14,18 @@ Return strict JSON only with these keys:
 company, role, location, application_url, status, deadline, salary, summary
 If a field is unknown, return null for that field.
 """.strip()
+logger = logging.getLogger(__name__)
+
+
+@lru_cache(maxsize=1)
+def _openai_client() -> OpenAI:
+    settings = get_settings()
+    return OpenAI(api_key=settings.openai_api_key)
 
 
 def extract_job_fields(email_item: dict[str, Any]) -> dict[str, Any]:
     settings = get_settings()
-    client = OpenAI(api_key=settings.openai_api_key)
+    client = _openai_client()
 
     user_content = {
         "subject": email_item.get("subject"),
@@ -40,4 +49,9 @@ def extract_job_fields(email_item: dict[str, Any]) -> dict[str, Any]:
         extracted = json.loads(content)
         return extracted if isinstance(extracted, dict) else {}
     except Exception:
+        logger.exception(
+            "OpenAI extraction failed for Gmail message_id=%s subject=%s",
+            email_item.get("gmail_message_id"),
+            email_item.get("subject"),
+        )
         return {}

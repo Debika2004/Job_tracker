@@ -15,6 +15,7 @@ class Settings(BaseSettings):
 
     google_client_id: str = Field(..., alias="GOOGLE_CLIENT_ID")
     google_client_secret: str = Field(..., alias="GOOGLE_CLIENT_SECRET")
+    google_project_id: str = Field("job-tracker-mvp", alias="GOOGLE_PROJECT_ID")
     google_redirect_uri: str = Field(
         "http://localhost:8000/api/gmail/oauth/callback",
         alias="GOOGLE_REDIRECT_URI",
